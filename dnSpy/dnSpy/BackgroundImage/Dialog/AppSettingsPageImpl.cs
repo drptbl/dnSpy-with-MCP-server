@@ -286,8 +286,9 @@ namespace dnSpy.BackgroundImage.Dialog {
 		void PickDirectory() => AddToImages(new[] { pickDirectory.GetDirectory(GetLastDirectory()) });
 
 		string? GetLastDirectory() {
-			foreach (var t in Images.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Reverse()) {
-				var f = t.Trim();
+			var entries = Images.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+			for (int i = entries.Length - 1; i >= 0; i--) {
+				var f = entries[i].Trim();
 				if (Directory.Exists(f))
 					return f;
 				if (File.Exists(f)) {
