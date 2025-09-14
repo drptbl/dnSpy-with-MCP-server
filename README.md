@@ -1,110 +1,33 @@
-# dnSpyEx
+## dnSpyEx (Custom Fork)
 
-dnSpyEx is an unofficial continuation of the [dnSpy](https://github.com/dnSpy/dnSpy) project which is a debugger and .NET assembly editor. You can use it to edit and debug assemblies even if you don't have any source code available. Main features:
+This repository is a targeted fork of dnSpyEx focused on two goals:
 
-- Debug .NET and Unity assemblies
-- Edit .NET and Unity assemblies
-- Light and dark themes
+- Make the codebase build and run smoothly in a modern setup (VS 2022).
+- Add an MCP (Model Context Protocol) server extension so external tools/agents can drive dnSpy features via JSON‑RPC over SSE.
 
-See below for more features
+What’s included
+- Visual Studio 2022 solution updates: The root solution has been updated for VS 2022 and project configuration mappings were refreshed for x86/x64/Any CPU targets.
+- Minor code quality/perf tweaks: Small refactors (e.g., reverse iteration in GetLastDirectory) to simplify logic.
+- MCP server extension: A new extension under `Extensions/Examples/Example1.Extension` adds an SSE‑based MCP server with tools, prompts, and resources:
+  - JSON‑RPC methods: `initialize`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`, `resources/list`, and `resources/templates/list`.
+  - SSE endpoint: `http://127.0.0.1:3003/sse` streams events; the first event exposes the POST endpoint for JSON‑RPC messages.
+  - Tools surface dnSpy functionality (e.g., inspect and modify assemblies) to MCP clients.
+  - Resources and templates follow the current MCP schema: concrete resources returned via `resources/list` (with `uri`), templates via `resources/templates/list` (with `uriTemplate`).
 
-![debug-animated](images/debug-animated.gif)
+About the MCP server
+- The extension is based on the AgentSmithers DnSpy MCP server concept and adapted to integrate with dnSpyEx and the current MCP spec.
+- Protocol compatibility: The server speaks JSON‑RPC 2.0 over SSE and uses a recent MCP protocol version identifier in `initialize`.
+- Copilot Chat integration: Add this server as an `sse` MCP endpoint in GitHub Copilot Chat (VS Code). The recent fixes ensure payloads match Copilot’s expected MCP shapes (e.g., `resources/list` returns only objects with `uri`).
 
-![edit-code-animated](images/edit-code-animated.gif)
+Getting started
+- Build: Open `dnSpy.sln` in Visual Studio 2022 and build. The extension project is included in the solution.
+- Run dnSpyEx and enable/load the example extension (Example1.Extension). When active, it starts an MCP server at `127.0.0.1:3003`.
+- Connect an MCP client:
+  1) Open `http://127.0.0.1:3003/sse` (server‑sent events stream).
+  2) Post JSON‑RPC requests to the endpoint announced by the first `event: endpoint` message (e.g., `/message?sessionId=...`).
 
-## Binaries
+Notes
+- This fork is intentionally minimal and focused on MCP integration and build compatibility. For the broader feature set and documentation of dnSpyEx, see the upstream project.
 
-Latest stable release: https://github.com/dnSpyEx/dnSpy/releases
-
-If you like living on the edge you can use the latest "beta" builds from:
-[![](https://github.com/dnSpyEx/dnSpy/workflows/GitHub%20CI/badge.svg)](https://github.com/dnSpyEx/dnSpy/actions)
-
-## Building
-
-```PS
-git clone --recursive https://github.com/dnSpyEx/dnSpy.git
-cd dnSpy
-# or dotnet build
-./build.ps1 -NoMsbuild
-```
-
-To debug Unity games, you need this repo too: https://github.com/dnSpyEx/dnSpy-Unity-mono
-
-# Debugger
-
-- Debug .NET Framework, .NET and Unity game assemblies, no source code required
-- Set breakpoints and step into any assembly
-- Locals, watch, autos windows
-- Variables windows support saving variables (eg. decrypted byte arrays) to disk or view them in the hex editor (memory window)
-- Object IDs
-- Multiple processes can be debugged at the same time
-- Break on module load
-- Tracepoints and conditional breakpoints
-- Export/import breakpoints and tracepoints
-- Optional Just My Code (JMC) stepping filters for system libraries
-- Call stack, threads, modules, processes windows
-- Break on thrown exceptions (1st chance)
-- Variables windows support evaluating C# / Visual Basic expressions
-- Dynamic modules can be debugged (but not dynamic methods due to CLR limitations)
-- Output window logs various debugging events, and it shows timestamps by default :)
-- Assemblies that decrypt themselves at runtime can be debugged, dnSpy will use the in-memory image. You can also force dnSpy to always use in-memory images instead of disk files.
-- Bypasses for common debugger detection techniques
-- Public API, you can write an extension or use the C# Interactive window to control the debugger
-
-# Assembly Editor
-
-- All metadata can be edited
-- Edit methods and classes in C# or Visual Basic with IntelliSense, no source code required
-- Add new methods, classes or members in C# or Visual Basic
-- IL editor for low-level IL method body editing
-- Low-level metadata tables can be edited. This uses the hex editor internally.
-
-# Hex Editor
-
-- Click on an address in the decompiled code to go to its IL code in the hex editor
-- The reverse of the above, press F12 in an IL body in the hex editor to go to the decompiled code or other high-level representation of the bits. It's great to find out which statement a patch modified.
-- Highlights .NET metadata structures and PE structures
-- Tooltips show more info about the selected .NET metadata / PE field
-- Go to position, file, RVA
-- Go to .NET metadata token, method body, #Blob / #Strings / #US heap offset or #GUID heap index
-- Follow references (Ctrl+F12)
-
-# Other
-
-- BAML decompiler and disassembler
-- Blue, light and dark themes (and a dark high contrast theme)
-- Bookmarks
-- C# Interactive window can be used to script dnSpy
-- Search assemblies for classes, methods, strings, etc
-- Analyze class and method usage, find callers, etc
-- Multiple tabs and tab groups
-- References are highlighted, use Tab / Shift+Tab to move to the next reference
-- Go to the entry point and module initializer commands
-- Go to metadata token or metadata row commands
-- Code tooltips (C# and Visual Basic)
-- Export to project
-
-# List of other open source libraries used by dnSpy
-
-- [ILSpy decompiler engine](https://github.com/icsharpcode/ILSpy) (C# and Visual Basic decompilers)
-- [Roslyn](https://github.com/dotnet/roslyn) (C# and Visual Basic compilers)
-- [dnlib](https://github.com/0xd4d/dnlib) (.NET metadata reader/writer which can also read obfuscated assemblies)
-- [VS MEF](https://github.com/microsoft/vs-mef) (Faster MEF equals faster startup)
-- [ClrMD](https://github.com/microsoft/clrmd) (Access to lower level debugging info not provided by the CorDebug API)
-- [Iced](https://github.com/icedland/iced) (x86/x64 disassembler)
-- [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) (JSON serializer & deserializer)
-- [NuGet.Configuration](https://github.com/NuGet/NuGet.Client) (NuGet configuration file reader)
-
-# Translating dnSpy
-
-[Click here](https://crowdin.com/project/dnspy) if you want to help with translating dnSpy to your native language.
-
-# Wiki
-
-See the [Wiki](https://github.com/dnSpyEx/dnSpy/wiki) for build instructions and other documentation.
-
-# License
-
-dnSpy is licensed under [GPLv3](dnSpy/dnSpy/LicenseInfo/GPLv3.txt).
-
-# [Credits](dnSpy/dnSpy/LicenseInfo/CREDITS.txt)
+License
+- dnSpy/dnSpyEx are GPLv3. See `dnSpy/dnSpy/LicenseInfo/GPLv3.txt` and `dnSpy/dnSpy/LicenseInfo/CREDITS.txt` for details.
